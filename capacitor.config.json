@@ -1,0 +1,6 @@
+{
+  "appId": "com.realcajadeobra.app",
+  "appName": "Real Caja de Obra",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}
