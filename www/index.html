@@ -8,6 +8,13 @@
     body { background-color: #f3f4f6; font-family: system-ui, -apple-system, sans-serif; }
     .tab-active { border-bottom: 3px solid #2563eb; color: #2563eb; font-weight: bold; }
   </style>
+    <!-- Configuración PWA / App Nativa -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1d4ed8">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Control Obra">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body class="pb-20">
 
@@ -164,6 +171,15 @@
     <!-- 📋 TAB 4: MOVIMIENTOS -->
     <section id="sec-movimientos" class="hidden space-y-4">
       <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-3">
+       <!-- BOTONES DE EXPORTACIÓN LOCAL -->
+      <div class="flex gap-2 p-2 bg-white rounded-xl shadow-sm border border-gray-100">
+        <button onclick="window.exportarAExcel()" type="button" class="w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-3 rounded-lg text-xs flex items-center justify-center gap-1 shadow-sm transition-all">
+          📊 Exportar Excel
+        </button>
+        <button onclick="window.exportarAPDF()" type="button" class="w-1/2 bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 px-3 rounded-lg text-xs flex items-center justify-center gap-1 shadow-sm transition-all">
+          📄 Exportar PDF
+        </button>
+      </div> 
         <input type="text" id="txtBuscar" onkeyup="filtrarTabla()" placeholder="🔍 Buscar por concepto, proveedor o peón..." class="w-full p-3 border rounded-lg text-sm">
         
         <div id="listaMovimientos" class="space-y-2 max-h-96 overflow-y-auto">
@@ -512,6 +528,93 @@
     if (nuevo !== null) {
       window.cerrarModalItem();
     }
+  };
+    // --- EXPORTAR A EXCEL ---
+  window.exportarAExcel = function() {
+    if (!globalData.movimientos || globalData.movimientos.length === 0) {
+      alert("No hay movimientos registrados para exportar.");
+      return;
+    }
+
+    var datosExcel = globalData.movimientos.map(function(m) {
+      var nombreObra = (globalData.obras.find(function(o) { return o.ID === m.ID_Obra; }) || {}).Nombre || 'Sin Obra';
+      return {
+        "Fecha": m.Fecha || '',
+        "Obra": nombreObra,
+        "Tipo": m.Tipo || '',
+        "Concepto / Rubro": m.Concepto || m.Rubro || '',
+        "Monto ($)": parseFloat(m.Monto) || 0,
+        "Forma de Pago": m.FormaPago || 'Efectivo',
+        "Remito/Factura": m.Remito || ''
+      };
+    });
+
+    var hoja = XLSX.utils.json_to_sheet(datosExcel);
+    var libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, "Movimientos");
+
+    XLSX.writeFile(libro, "Control_Obra_Movimientos.xlsx");
+  };
+
+  // --- EXPORTAR A PDF ---
+  window.exportarAPDF = function() {
+    if (!globalData.movimientos || globalData.movimientos.length === 0) {
+      alert("No hay movimientos registrados para imprimir.");
+      return;
+    }
+
+    var ventana = window.open('', '', 'height=700,width=900');
+    var html = `
+      <html>
+        <head>
+          <title>Reporte de Movimientos - Control Obra</title>
+          <style>
+            body { font-family: sans-serif; padding: 20px; color: #1e293b; }
+            h2 { color: #1d4ed8; border-bottom: 2px solid #1d4ed8; padding-bottom: 8px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+            th, td { border: 1px solid #cbd5e1; padding: 8px; font-size: 12px; text-align: left; }
+            th { background-color: #f1f5f9; }
+            .monto { font-weight: bold; text-align: right; }
+          </style>
+        </head>
+        <body>
+          <h2>👷 Control Obra & Caja - Reporte de Movimientos</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Obra</th>
+                <th>Detalle / Concepto</th>
+                <th>Tipo</th>
+                <th>Monto</th>
+              </tr>
+            </thead>
+            <tbody>
+    `;
+
+    globalData.movimientos.forEach(function(m) {
+      var nombreObra = (globalData.obras.find(function(o) { return o.ID === m.ID_Obra; }) || {}).Nombre || 'Obra';
+      html += `
+        <tr>
+          <td>${m.Fecha || ''}</td>
+          <td>${nombreObra}</td>
+          <td>${m.Concepto || m.Rubro || ''}</td>
+          <td>${m.Tipo || ''}</td>
+          <td class="monto">$${parseFloat(m.Monto).toLocaleString()}</td>
+        </tr>
+      `;
+    });
+
+    html += `
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+
+    ventana.document.write(html);
+    ventana.document.close();
+    ventana.print();
   };
   </script>
 <!-- Fin del script de JavaScript -->
