@@ -8,13 +8,13 @@
     body { background-color: #f3f4f6; font-family: system-ui, -apple-system, sans-serif; }
     .tab-active { border-bottom: 3px solid #2563eb; color: #2563eb; font-weight: bold; }
   </style>
-    <!-- Configuración PWA / App Nativa -->
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#1d4ed8">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Control Obra">
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- Configuración PWA / App Nativa -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1d4ed8">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Control Obra">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body class="pb-20">
 
@@ -29,7 +29,7 @@
     </button>
   </header>
 
-  <!-- NAVEGACIÓN SUPERIOR (Reincorporada solapa Subcontratos) -->
+  <!-- NAVEGACIÓN SUPERIOR -->
   <nav class="bg-white shadow flex justify-around text-xs md:text-sm font-medium border-b sticky top-16 z-40">
     <button onclick="cambiarTab('cargar')" id="tab-cargar" class="p-3 tab-active w-full text-center">⚡ Cargar</button>
     <button onclick="cambiarTab('simular')" id="tab-simular" class="p-3 w-full text-center">🧮 Simular</button>
@@ -103,7 +103,7 @@
       </div>
     </section>
 
-    <!-- 🧮 TAB 2: SIMULADOR Y BALANCE DE LIQUIDACIÓN -->
+    <!-- 🧮 TAB 2: SIMULADOR -->
     <section id="sec-simular" class="hidden space-y-4">
       <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 space-y-4">
         <h2 class="text-lg font-semibold text-gray-800 border-b pb-2">Simulador de Pago de Hoy</h2>
@@ -115,7 +115,6 @@
           </select>
         </div>
 
-        <!-- TARJETA DE BALANCE EN CAJA DE OBRA -->
         <div id="boxCajaObra" class="hidden bg-slate-800 text-white p-4 rounded-xl space-y-2">
           <div class="flex justify-between items-center">
             <span class="text-xs uppercase tracking-wide text-slate-300">Caja Actual de Obra</span>
@@ -127,15 +126,11 @@
           </div>
         </div>
 
-        <!-- LISTA DE OBREROS PARA SIMULAR -->
         <div id="panelSimulador" class="hidden space-y-4 pt-2">
           <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wide">Cuadrilla y Días Trabajados</h3>
           
-          <div id="contenedorSimulacion" class="space-y-3 max-h-80 overflow-y-auto pr-1">
-            <!-- Se puebla dinámicamente -->
-          </div>
+          <div id="contenedorSimulacion" class="space-y-3 max-h-80 overflow-y-auto pr-1"></div>
 
-          <!-- RESUMEN PROYECTADO -->
           <div class="bg-blue-50 border border-blue-200 p-4 rounded-xl space-y-2">
             <div class="flex justify-between items-center">
               <span class="text-xs font-bold text-blue-900 uppercase">Total Necesario Hoy:</span>
@@ -154,7 +149,7 @@
       </div>
     </section>
 
-    <!-- 🏗️ TAB 3: SUBCONTRATOS / GREMIOS -->
+    <!-- 🏗️ TAB 3: SUBCONTRATOS -->
     <section id="sec-subcontratos" class="hidden space-y-4">
       <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 space-y-4">
         <h2 class="text-lg font-semibold text-gray-800 border-b pb-2">Gestión de Subcontratos</h2>
@@ -170,16 +165,18 @@
 
     <!-- 📋 TAB 4: MOVIMIENTOS -->
     <section id="sec-movimientos" class="hidden space-y-4">
-      <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-3">
-       <!-- BOTONES DE EXPORTACIÓN LOCAL -->
+      
+      <!-- BOTONES DE EXPORTACIÓN -->
       <div class="flex gap-2 p-2 bg-white rounded-xl shadow-sm border border-gray-100">
         <button onclick="window.exportarAExcel()" type="button" class="w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-3 rounded-lg text-xs flex items-center justify-center gap-1 shadow-sm transition-all">
-          📊 Exportar Excel
+          📊 Exportar CSV/Excel
         </button>
         <button onclick="window.exportarAPDF()" type="button" class="w-1/2 bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 px-3 rounded-lg text-xs flex items-center justify-center gap-1 shadow-sm transition-all">
           📄 Exportar PDF
         </button>
       </div> 
+
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-3">
         <input type="text" id="txtBuscar" onkeyup="filtrarTabla()" placeholder="🔍 Buscar por concepto, proveedor o peón..." class="w-full p-3 border rounded-lg text-sm">
         
         <div id="listaMovimientos" class="space-y-2 max-h-96 overflow-y-auto">
@@ -189,6 +186,26 @@
     </section>
 
   </main>
+
+  <!-- MODAL EMERGENTE -->
+  <div id="modalItem" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl p-5 max-w-xs w-full shadow-2xl space-y-4">
+      <h3 id="modalNombreEmpleado" class="font-bold text-slate-800 text-base border-b pb-2">Movimiento</h3>
+      
+      <div class="space-y-2">
+        <button onclick="window.accionModificarItem()" type="button" class="w-full bg-slate-100 hover:bg-amber-50 text-slate-700 hover:text-amber-700 font-bold py-2.5 px-4 rounded-xl border border-slate-200 text-sm flex items-center justify-center gap-2">
+          ✏️ Modificar
+        </button>
+        <button onclick="window.accionBorrarItem()" type="button" class="w-full bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold py-2.5 px-4 rounded-xl border border-rose-200 text-sm flex items-center justify-center gap-2">
+          🗑️ Borrar
+        </button>
+      </div>
+
+      <button onclick="window.cerrarModalItem()" type="button" class="w-full bg-slate-200 text-slate-600 font-semibold py-2 px-4 rounded-xl text-xs">
+        Cancelar
+      </button>
+    </div>
+  </div>
 
   <script>
     var globalData = { empleados: [], obras: [], movimientos: [] };
@@ -253,7 +270,6 @@
       document.getElementById('tab-' + tab).classList.add('tab-active');
     }
 
-    // 🧮 LÓGICA DEL SIMULADOR AUTOMÁTICO
     function cargarSimuladorObra() {
       var idObra = document.getElementById('simObra').value;
       var boxCaja = document.getElementById('boxCajaObra');
@@ -421,7 +437,7 @@
 
     function renderizarSubcontratos() {
       var cont = document.getElementById('listaSubcontratos');
-      var movSub = globalData.movimientos.filter(m => m.Tipo === 'Pago Subcontrato' || m.Rubro.toLowerCase().includes('plomero') || m.Rubro.toLowerCase().includes('electricista'));
+      var movSub = globalData.movimientos.filter(m => m.Tipo === 'Pago Subcontrato' || (m.Rubro && (m.Rubro.toLowerCase().includes('plomero') || m.Rubro.toLowerCase().includes('electricista'))));
       
       if(movSub.length === 0) {
         cont.innerHTML = '<div class="p-4 bg-gray-50 border rounded-xl text-center text-sm text-gray-500">No hay pagos a subcontratos registrados aún.</div>';
@@ -447,17 +463,15 @@
       if(ocultarMontos) aplicarPrivacidadUI();
     }
 
-   function renderizarTabla() {
+    function renderizarTabla() {
       var cont = document.getElementById('listaMovimientos');
       cont.innerHTML = '';
 
       globalData.movimientos.forEach(function(m) {
         var nombreObra = (globalData.obras.find(o => o.ID === m.ID_Obra) || {}).Nombre || 'Obra';
-        var tituloModal = (m.Concepto || m.Rubro || m.Tipo).replace(/'/g, "\\'");
         
         var card = document.createElement('div');
         card.className = "p-3 bg-gray-50 hover:bg-gray-100 border rounded-lg flex justify-between items-center text-sm cursor-pointer transition-all";
-        // Asignación explícita del manejador de clic:
         card.onclick = function() {
           window.abrirModalConTitulo(m.Concepto || m.Rubro || m.Tipo);
         };
@@ -499,123 +513,118 @@
         item.style.display = item.innerText.toLowerCase().includes(q) ? 'flex' : 'none';
       });
     }
-  window.abrirModalConTitulo = function(titulo) {
-    var elNombre = document.getElementById('modalNombreEmpleado');
-    var elModal = document.getElementById('modalItem');
-    if (elNombre) elNombre.innerText = titulo || 'Movimiento';
-    if (elModal) {
-      elModal.classList.remove('hidden');
-      elModal.classList.add('flex');
-    }
-  };
 
-  window.cerrarModalItem = function() {
-    var elModal = document.getElementById('modalItem');
-    if (elModal) {
-      elModal.classList.add('hidden');
-      elModal.classList.remove('flex');
-    }
-  };
+    // EXPORTACIÓN A EXCEL / CSV NATIVO
+    window.exportarAExcel = function() {
+      if (!globalData.movimientos || globalData.movimientos.length === 0) {
+        alert("No hay movimientos registrados para exportar.");
+        return;
+      }
 
-  window.accionBorrarItem = function() {
-    if (confirm("¿Seguro que querés borrar este movimiento?")) {
-      window.cerrarModalItem();
-    }
-  };
+      var csvContent = "data:text/csv;charset=utf-8,Fecha,Obra,Tipo,Concepto/Rubro,Monto,FormaPago,Remito\n";
+      
+      globalData.movimientos.forEach(function(m) {
+        var nombreObra = (globalData.obras.find(o => o.ID === m.ID_Obra) || {}).Nombre || 'Obra';
+        var fila = [
+          '"' + (m.Fecha || '') + '"',
+          '"' + nombreObra + '"',
+          '"' + (m.Tipo || '') + '"',
+          '"' + (m.Concepto || m.Rubro || '').replace(/"/g, '""') + '"',
+          m.Monto || 0,
+          '"' + (m.FormaPago || '') + '"',
+          '"' + (m.Remito || '') + '"'
+        ].join(",");
+        csvContent += fila + "\n";
+      });
 
-  window.accionModificarItem = function() {
-    var nuevo = prompt("Modificar concepto / detalle:");
-    if (nuevo !== null) {
-      window.cerrarModalItem();
-    }
-  };
-    // --- EXPORTAR A EXCEL ---
-  window.exportarAExcel = function() {
-    if (!globalData.movimientos || globalData.movimientos.length === 0) {
-      alert("No hay movimientos registrados para exportar.");
-      return;
-    }
+      var encodedUri = encodeURI(csvContent);
+      var link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "Control_Obra_Movimientos.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    };
 
-    var datosExcel = globalData.movimientos.map(function(m) {
-      var nombreObra = (globalData.obras.find(function(o) { return o.ID === m.ID_Obra; }) || {}).Nombre || 'Sin Obra';
-      return {
-        "Fecha": m.Fecha || '',
-        "Obra": nombreObra,
-        "Tipo": m.Tipo || '',
-        "Concepto / Rubro": m.Concepto || m.Rubro || '',
-        "Monto ($)": parseFloat(m.Monto) || 0,
-        "Forma de Pago": m.FormaPago || 'Efectivo',
-        "Remito/Factura": m.Remito || ''
-      };
-    });
+    // EXPORTACIÓN A PDF
+    window.exportarAPDF = function() {
+      if (!globalData.movimientos || globalData.movimientos.length === 0) {
+        alert("No hay movimientos registrados para imprimir.");
+        return;
+      }
 
-    var hoja = XLSX.utils.json_to_sheet(datosExcel);
-    var libro = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(libro, hoja, "Movimientos");
-
-    XLSX.writeFile(libro, "Control_Obra_Movimientos.xlsx");
-  };
-
-  // --- EXPORTAR A PDF ---
-  window.exportarAPDF = function() {
-    if (!globalData.movimientos || globalData.movimientos.length === 0) {
-      alert("No hay movimientos registrados para imprimir.");
-      return;
-    }
-
-    var ventana = window.open('', '', 'height=700,width=900');
-    var html = `
-      <html>
-        <head>
-          <title>Reporte de Movimientos - Control Obra</title>
-          <style>
-            body { font-family: sans-serif; padding: 20px; color: #1e293b; }
-            h2 { color: #1d4ed8; border-bottom: 2px solid #1d4ed8; padding-bottom: 8px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-            th, td { border: 1px solid #cbd5e1; padding: 8px; font-size: 12px; text-align: left; }
-            th { background-color: #f1f5f9; }
-            .monto { font-weight: bold; text-align: right; }
-          </style>
-        </head>
-        <body>
-          <h2>👷 Control Obra & Caja - Reporte de Movimientos</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Obra</th>
-                <th>Detalle / Concepto</th>
-                <th>Tipo</th>
-                <th>Monto</th>
-              </tr>
-            </thead>
-            <tbody>
-    `;
-
-    globalData.movimientos.forEach(function(m) {
-      var nombreObra = (globalData.obras.find(function(o) { return o.ID === m.ID_Obra; }) || {}).Nombre || 'Obra';
-      html += `
-        <tr>
-          <td>${m.Fecha || ''}</td>
-          <td>${nombreObra}</td>
-          <td>${m.Concepto || m.Rubro || ''}</td>
-          <td>${m.Tipo || ''}</td>
-          <td class="monto">$${parseFloat(m.Monto).toLocaleString()}</td>
-        </tr>
+      var contenido = `
+        <h2>👷 Control Obra & Caja - Reporte de Movimientos</h2>
+        <table border="1" style="width:100%; border-collapse:collapse; font-family:sans-serif; font-size:12px;">
+          <thead style="background-color:#f1f5f9;">
+            <tr>
+              <th style="padding:6px;">Fecha</th>
+              <th style="padding:6px;">Obra</th>
+              <th style="padding:6px;">Concepto / Rubro</th>
+              <th style="padding:6px;">Tipo</th>
+              <th style="padding:6px;">Monto</th>
+            </tr>
+          </thead>
+          <tbody>
       `;
-    });
 
-    html += `
-            </tbody>
-          </table>
-        </body>
-      </html>
-    `;
+      globalData.movimientos.forEach(function(m) {
+        var nombreObra = (globalData.obras.find(o => o.ID === m.ID_Obra) || {}).Nombre || 'Obra';
+        contenido += `
+          <tr>
+            <td style="padding:6px;">${m.Fecha || ''}</td>
+            <td style="padding:6px;">${nombreObra}</td>
+            <td style="padding:6px;">${m.Concepto || m.Rubro || ''}</td>
+            <td style="padding:6px;">${m.Tipo || ''}</td>
+            <td style="padding:6px; text-align:right; font-weight:bold;">$${parseFloat(m.Monto || 0).toLocaleString()}</td>
+          </tr>
+        `;
+      });
 
-    ventana.document.write(html);
-    ventana.document.close();
-    ventana.print();
-  };
+      contenido += `</tbody></table>`;
+
+      var myWindow = window.open('', '_blank');
+      if (!myWindow) {
+        alert("Por favor desactivá el bloqueador de ventanas emergentes para generar el PDF.");
+        return;
+      }
+      myWindow.document.write('<html><head><title>Reporte PDF</title></head><body>' + contenido + '</body></html>');
+      myWindow.document.close();
+      myWindow.focus();
+      setTimeout(function() { myWindow.print(); }, 500);
+    };
+
+    // FUNCIONES DEL MODAL
+    window.abrirModalConTitulo = function(titulo) {
+      var elNombre = document.getElementById('modalNombreEmpleado');
+      var elModal = document.getElementById('modalItem');
+      if (elNombre) elNombre.innerText = titulo || 'Movimiento';
+      if (elModal) {
+        elModal.classList.remove('hidden');
+        elModal.classList.add('flex');
+      }
+    };
+
+    window.cerrarModalItem = function() {
+      var elModal = document.getElementById('modalItem');
+      if (elModal) {
+        elModal.classList.add('hidden');
+        elModal.classList.remove('flex');
+      }
+    };
+
+    window.accionBorrarItem = function() {
+      if (confirm("¿Seguro que querés borrar este movimiento?")) {
+        window.cerrarModalItem();
+      }
+    };
+
+    window.accionModificarItem = function() {
+      var nuevo = prompt("Modificar concepto / detalle:");
+      if (nuevo !== null) {
+        window.cerrarModalItem();
+      }
+    };
   </script>
 <!-- Fin del script de JavaScript -->
 
