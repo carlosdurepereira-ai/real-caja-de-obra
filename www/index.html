@@ -2,384 +2,539 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Control Obra & Caja</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
-    /* Ocultar barra de scroll en las solapas horizontales */
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    body { background-color: #f3f4f6; font-family: system-ui, -apple-system, sans-serif; }
+    .tab-active { border-bottom: 3px solid #2563eb; color: #2563eb; font-weight: bold; }
   </style>
 </head>
-<body class="bg-gray-100 font-sans min-h-screen pb-12">
+<body class="pb-20">
 
-  <!-- HEADER PRINCIPAL -->
-  <header class="bg-blue-700 text-white p-3 shadow-md">
-    <div class="max-w-4xl mx-auto flex justify-between items-center">
-      <div class="flex items-center space-x-2">
-        <i class="fa-solid fa-hard-hat text-2xl text-amber-400"></i>
-        <h1 class="text-lg font-bold">Control Obra & Caja</h1>
-      </div>
-      <button onclick="cargarDatos()" class="bg-blue-600 hover:bg-blue-800 p-2 rounded-full transition" title="Recargar datos">
-        <i class="fa-solid fa-rotate-right"></i>
-      </button>
+  <!-- ENCABEZADO -->
+  <header class="bg-blue-700 text-white p-4 shadow-md flex justify-between items-center sticky top-0 z-50">
+    <div>
+      <h1 class="text-xl font-bold tracking-wide">👷 Control Obra & Caja</h1>
+      <p class="text-xs text-blue-100">Gestión de Campo, Cuadrillas y Gremios</p>
     </div>
+    <button onclick="togglePrivacy()" class="bg-blue-800 p-2 rounded-lg text-sm border border-blue-500">
+      👁️ <span id="privacyStatus">Visible</span>
+    </button>
   </header>
 
-  <!-- BARRA DE SOLAPAS HORIZONTALES (Navegación Superior) -->
-  <nav class="bg-blue-800 text-white shadow-inner">
-    <div id="tabs-container" class="max-w-4xl mx-auto flex overflow-x-auto no-scrollbar whitespace-nowrap px-2 text-xs uppercase font-bold tracking-wider">
-      <!-- Se llenan dinámicamente con JS -->
-    </div>
+  <!-- NAVEGACIÓN SUPERIOR (Reincorporada solapa Subcontratos) -->
+  <nav class="bg-white shadow flex justify-around text-xs md:text-sm font-medium border-b sticky top-16 z-40">
+    <button onclick="cambiarTab('cargar')" id="tab-cargar" class="p-3 tab-active w-full text-center">⚡ Cargar</button>
+    <button onclick="cambiarTab('simular')" id="tab-simular" class="p-3 w-full text-center">🧮 Simular</button>
+    <button onclick="cambiarTab('subcontratos')" id="tab-subcontratos" class="p-3 w-full text-center">🏗️ Subcontratos</button>
+    <button onclick="cambiarTab('movimientos')" id="tab-movimientos" class="p-3 w-full text-center">📋 Movimientos</button>
   </nav>
 
-  <main class="max-w-4xl mx-auto p-4">
+  <main class="p-4 max-w-lg mx-auto">
 
-    <!-- ==================== VISTA 1: REGISTRAR MOVIMIENTO ==================== -->
-    <div id="vista-registrar" class="vista-seccion space-y-4">
-      <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
-        <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <i class="fa-solid fa-bolt text-amber-500"></i> Registrar Movimiento
-        </h2>
-
-        <form id="form-movimiento" onsubmit="guardarMovimiento(event)" class="space-y-4">
-          
-          <!-- SELECCIONAR EMPLEADO -->
-          <div>
-            <div class="flex justify-between items-center mb-1">
-              <label class="text-xs font-bold text-gray-600 uppercase">Empleado</label>
-              <button type="button" onclick="abrirModalEmpleado()" class="text-xs text-blue-600 hover:underline font-semibold">+ Nuevo</button>
-            </div>
-            <select id="select-empleado" onchange="evaluarCalculadoraLiquidacion()" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-              <option value="">-- Seleccionar Empleado (Opcional) --</option>
-            </select>
-          </div>
-
-          <!-- SELECCIONAR OBRA -->
-          <div>
-            <div class="flex justify-between items-center mb-1">
-              <label class="text-xs font-bold text-gray-600 uppercase">Obra Imputada *</label>
-              <button type="button" onclick="abrirModalObra()" class="text-xs text-blue-600 hover:underline font-semibold">+ Nueva Obra</button>
-            </div>
-            <select id="select-obra" required class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-              <option value="">-- Seleccionar Obra --</option>
-            </select>
-          </div>
-
-          <!-- TIPO OPERACIÓN -->
-          <div>
-            <label class="text-xs font-bold text-gray-600 uppercase block mb-2">Tipo de Operación</label>
-            <div class="grid grid-cols-2 gap-2 text-xs font-semibold">
-              <label class="flex items-center p-3 border rounded-lg bg-amber-50 border-amber-200 cursor-pointer">
-                <input type="radio" name="tipo" value="Vale" checked onchange="evaluarCalculadoraLiquidacion()" class="mr-2 accent-amber-600"> Vale / Adelanto
-              </label>
-              <label class="flex items-center p-3 border rounded-lg bg-emerald-50 border-emerald-200 cursor-pointer">
-                <input type="radio" name="tipo" value="Pago" onchange="evaluarCalculadoraLiquidacion()" class="mr-2 accent-emerald-600"> Descuento / Pago
-              </label>
-              <label class="flex items-center p-3 border rounded-lg bg-red-50 border-red-200 cursor-pointer">
-                <input type="radio" name="tipo" value="Gasto" onchange="evaluarCalculadoraLiquidacion()" class="mr-2 accent-red-600"> Gasto de Obra
-              </label>
-              <label class="flex items-center p-3 border rounded-lg bg-blue-50 border-blue-200 cursor-pointer">
-                <input type="radio" name="tipo" value="Ingreso" onchange="evaluarCalculadoraLiquidacion()" class="mr-2 accent-blue-600"> Ingreso Caja
-              </label>
-            </div>
-          </div>
-
-          <!-- CALCULADORA DE LIQUIDACIÓN DE JORNAL/QUINCENA -->
-          <div id="panel-calculadora" class="hidden p-4 bg-emerald-50 border border-emerald-200 rounded-lg space-y-3">
-            <span class="text-xs font-bold text-emerald-800 uppercase flex items-center gap-1">
-              <i class="fa-solid fa-calculator"></i> Asistente de Liquidación
-            </span>
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="text-[11px] font-bold text-gray-600 uppercase">Días / Unidades</label>
-                <input type="number" id="calc-dias" placeholder="Ej: 5" oninput="calcularTotalLiquidacion()" class="w-full p-2 bg-white border border-gray-300 rounded text-sm outline-none">
-              </div>
-              <div>
-                <label class="text-[11px] font-bold text-gray-600 uppercase">Valor x Día / Unidad ($)</label>
-                <input type="number" id="calc-valor" placeholder="Ej: 100" oninput="calcularTotalLiquidacion()" class="w-full p-2 bg-white border border-gray-300 rounded text-sm outline-none">
-              </div>
-            </div>
-            <div class="text-xs text-emerald-900 font-semibold space-y-1 border-t border-emerald-200 pt-2">
-              <div class="flex justify-between"><span>Subtotal devengado:</span><span id="calc-subtotal">$0</span></div>
-              <div class="flex justify-between text-amber-700"><span>Vales pendientes a descontar:</span><span id="calc-vales-pendientes">-$0</span></div>
-              <div class="flex justify-between text-sm font-black text-emerald-700 border-t pt-1"><span>Neto final a pagar:</span><span id="calc-neto">$0</span></div>
-            </div>
-          </div>
-
-          <!-- MONTO Y FORMA DE PAGO -->
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="text-xs font-bold text-gray-600 uppercase block mb-1">Monto ($)</label>
-              <input type="number" id="monto" step="0.01" required placeholder="0.00" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg text-sm outline-none">
-            </div>
-            <div>
-              <label class="text-xs font-bold text-gray-600 uppercase block mb-1">Forma de Pago</label>
-              <select id="forma-pago" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg text-sm outline-none">
-                <option value="Efectivo">Efectivo</option>
-                <option value="Transferencia">Transferencia</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- CONCEPTO -->
-          <div>
-            <label class="text-xs font-bold text-gray-600 uppercase block mb-1">Concepto / Detalle</label>
-            <input type="text" id="concepto" placeholder="Ej: Pago Quincena / Materiales" class="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg text-sm outline-none">
-          </div>
-
-          <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md transition flex justify-center items-center gap-2">
-            <i class="fa-solid fa-floppy-disk"></i> Registrar Operación
-          </button>
-        </form>
-      </div>
-    </div>
-
-
-    <!-- ==================== VISTA 2: FICHA DE EMPLEADOS ==================== -->
-    <div id="vista-empleados" class="vista-seccion hidden space-y-4">
-      <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 space-y-4">
-        <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
-          <i class="fa-solid fa-users text-blue-600"></i> Control de Operarios y Personal
-        </h2>
-
-        <!-- BUSCADOR -->
-        <div class="relative">
-          <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-gray-400"></i>
-          <input type="text" id="buscar-empleado" oninput="filtrarEmpleadoLista()" placeholder="Buscar por nombre de operario (ej: Hugo)..." class="w-full pl-9 p-2.5 bg-gray-50 border rounded-lg text-sm outline-none">
-        </div>
-
-        <!-- SELECTOR DE FICHA -->
+    <!-- ⚡ TAB 1: CARGAR REGISTRO -->
+    <section id="sec-cargar" class="space-y-4">
+      <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 space-y-4">
+        <h2 class="text-lg font-semibold text-gray-800 border-b pb-2">Registrar Movimiento</h2>
+        
         <div>
-          <label class="text-xs font-bold text-gray-500 uppercase block mb-1">Seleccionar Operario para ver Ficha:</label>
-          <select id="select-ficha-empleado" onchange="verFichaEmpleado(this.value)" class="w-full p-2.5 bg-gray-50 border rounded-lg text-sm outline-none font-bold text-gray-700">
-            <option value="">-- Seleccionar --</option>
+          <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Obra Imputada *</label>
+          <select id="selObra" class="w-full p-3 border rounded-lg bg-gray-50 text-gray-800 text-base">
+            <option value="">-- Seleccionar Obra --</option>
           </select>
         </div>
 
-        <!-- CONTENEDOR FICHA DEL EMPLEADO SELECCIONADO -->
-        <div id="detalle-ficha-empleado" class="hidden space-y-4 border-t pt-4">
-          <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 flex justify-between items-center">
-            <div>
-              <h3 id="ficha-emp-nombre" class="text-lg font-black text-blue-900">Hugo Pereira</h3>
-              <p id="ficha-emp-gremio" class="text-xs text-blue-700">Especialidad: Oficial</p>
-            </div>
-            <div class="text-right">
-              <span class="text-xs text-gray-500 font-bold block uppercase">Vales Pendientes</span>
-              <span id="ficha-emp-saldo" class="text-xl font-black text-amber-600">$0</span>
-            </div>
-          </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Tipo de Operación *</label>
+          <select id="selTipo" onchange="evaluarTipoOp()" class="w-full p-3 border rounded-lg bg-gray-50 text-gray-800 text-base">
+            <option value="Gasto Obra">Gasto de Obra / Materiales</option>
+            <option value="Vale">Vale a Empleado</option>
+            <option value="Pago Subcontrato">Pago a Subcontrato / Grito</option>
+            <option value="Ingreso">Ingreso de Caja / Cliente</option>
+          </select>
+        </div>
 
-          <h4 class="text-xs font-bold text-gray-500 uppercase">Historial de Pagos y Adelantos</h4>
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs text-gray-600">
-              <thead class="bg-gray-50 uppercase text-gray-400 border-b">
-                <tr>
-                  <th class="p-2">Fecha</th>
-                  <th class="p-2">Tipo</th>
-                  <th class="p-2">Concepto / Obra</th>
-                  <th class="p-2 text-right">Monto</th>
-                </tr>
-              </thead>
-              <tbody id="tabla-emp-movimientos" class="divide-y">
-                <!-- Se llena con JS -->
-              </tbody>
-            </table>
+        <div id="divEmpleado" class="hidden">
+          <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Empleado *</label>
+          <select id="selEmpleado" class="w-full p-3 border rounded-lg bg-gray-50 text-gray-800 text-base">
+            <option value="">-- Seleccionar Empleado --</option>
+          </select>
+        </div>
+
+        <div id="divRubro">
+          <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Rubro / Proveedor / Subcontrato</label>
+          <input type="text" id="txtRubro" placeholder="Ej: Plomero / Electricista / Corralón" class="w-full p-3 border rounded-lg text-base">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Monto ($) *</label>
+          <input type="number" id="numMonto" placeholder="0.00" class="w-full p-3 border rounded-lg text-xl font-bold text-blue-700">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Forma de Pago</label>
+            <select id="selFormaPago" class="w-full p-3 border rounded-lg bg-gray-50 text-sm">
+              <option value="Efectivo">Efectivo</option>
+              <option value="Transferencia">Transferencia</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-600 uppercase mb-1">N° Remito / Factura</label>
+            <input type="text" id="txtRemito" placeholder="Opcional" class="w-full p-3 border rounded-lg text-sm">
           </div>
         </div>
 
+        <div>
+          <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Concepto / Detalle</label>
+          <input type="text" id="txtConcepto" placeholder="Ej: Pago a cuenta avance / Materiales" class="w-full p-3 border rounded-lg text-base">
+        </div>
+
+        <button onclick="guardarRegistro()" class="w-full bg-blue-600 text-white font-bold p-4 rounded-xl shadow-lg active:bg-blue-800 text-lg">
+          💾 Guardar Registro
+        </button>
       </div>
-    </div>
+    </section>
 
+    <!-- 🧮 TAB 2: SIMULADOR Y BALANCE DE LIQUIDACIÓN -->
+    <section id="sec-simular" class="hidden space-y-4">
+      <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 space-y-4">
+        <h2 class="text-lg font-semibold text-gray-800 border-b pb-2">Simulador de Pago de Hoy</h2>
 
-    <!-- ==================== VISTA 3: FINANZAS Y UTILIDADES ==================== -->
-    <div id="vista-finanzas" class="vista-seccion hidden space-y-6">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-amber-500">
-          <div class="flex justify-between items-center">
-            <span class="text-xs font-bold text-gray-500 uppercase">Vales Pendientes</span>
-            <button onclick="togglePrivacy('vales')" class="text-gray-400 hover:text-gray-700 text-sm">
-              <i id="icon-vales" class="fa-solid fa-eye-slash"></i>
-            </button>
-          </div>
-          <div id="vales-monto" class="text-2xl font-black text-amber-600 mt-1">$ ••••••</div>
+        <div>
+          <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Seleccionar Obra *</label>
+          <select id="simObra" onchange="cargarSimuladorObra()" class="w-full p-3 border rounded-lg bg-gray-50 text-base font-medium">
+            <option value="">-- Seleccionar Obra --</option>
+          </select>
         </div>
 
-        <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-emerald-500">
+        <!-- TARJETA DE BALANCE EN CAJA DE OBRA -->
+        <div id="boxCajaObra" class="hidden bg-slate-800 text-white p-4 rounded-xl space-y-2">
           <div class="flex justify-between items-center">
-            <span class="text-xs font-bold text-gray-500 uppercase">Balance Caja</span>
-            <button onclick="togglePrivacy('balance')" class="text-gray-400 hover:text-gray-700 text-sm">
-              <i id="icon-balance" class="fa-solid fa-eye-slash"></i>
-            </button>
+            <span class="text-xs uppercase tracking-wide text-slate-300">Caja Actual de Obra</span>
+            <span id="simCajaDisponible" class="text-2xl font-black text-emerald-400 privacy-mask">$0</span>
           </div>
-          <div id="balance-monto" class="text-2xl font-black text-emerald-600 mt-1">$ ••••••</div>
+          <div class="text-xs text-slate-400 flex justify-between border-t border-slate-700 pt-2">
+            <span>Ingresado: <b id="simIngresado" class="text-emerald-300 privacy-mask">$0</b></span>
+            <span>Gastado/Vales: <b id="simGastado" class="text-red-300 privacy-mask">$0</b></span>
+          </div>
         </div>
-      </div>
 
-      <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
-            <i class="fa-solid fa-chart-line text-blue-600"></i> Estado & Utilidad por Obra
-          </h2>
-          <button onclick="toggleTodasUtilidades()" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg font-medium transition">
-            <i id="icon-utilidades-todas" class="fa-solid fa-eye mr-1"></i> Ver/Ocultar Totales
+        <!-- LISTA DE OBREROS PARA SIMULAR -->
+        <div id="panelSimulador" class="hidden space-y-4 pt-2">
+          <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wide">Cuadrilla y Días Trabajados</h3>
+          
+          <div id="contenedorSimulacion" class="space-y-3 max-h-80 overflow-y-auto pr-1">
+            <!-- Se puebla dinámicamente -->
+          </div>
+
+          <!-- RESUMEN PROYECTADO -->
+          <div class="bg-blue-50 border border-blue-200 p-4 rounded-xl space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-bold text-blue-900 uppercase">Total Necesario Hoy:</span>
+              <span id="simTotalPagar" class="text-2xl font-black text-blue-700 privacy-mask">$0</span>
+            </div>
+            <div class="flex justify-between items-center text-xs border-t border-blue-200 pt-2">
+              <span class="font-bold text-blue-800">Saldo Final en Caja Post-Pago:</span>
+              <span id="simSaldoRestante" class="font-bold text-lg privacy-mask">$0</span>
+            </div>
+          </div>
+
+          <button onclick="procesarPagoSimulado()" class="w-full bg-emerald-600 text-white font-bold p-4 rounded-xl shadow-lg active:bg-emerald-800 text-lg">
+            💵 Confirmar y Pagar Todo
           </button>
         </div>
-        <div id="lista-obras-utilidad" class="space-y-3"></div>
       </div>
-    </div>
+    </section>
 
-
-    <!-- ==================== VISTA 4: DETALLE DINÁMICO DE OBRA ==================== -->
-    <div id="vista-obra-detalle" class="vista-seccion hidden space-y-4">
-      <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
-        <div class="flex justify-between items-start border-b pb-3 mb-4">
-          <div>
-            <h2 id="obra-titulo" class="text-xl font-black text-gray-800">Nombre de la Obra</h2>
-            <p id="obra-subtitulo" class="text-xs text-gray-500 mt-0.5">Presupuesto y gastos</p>
-          </div>
-          <div class="text-right">
-            <span class="text-xs text-gray-400 uppercase font-bold block">Gasto Total</span>
-            <span id="obra-gasto-total" class="text-lg font-black text-red-600">$0</span>
+    <!-- 🏗️ TAB 3: SUBCONTRATOS / GREMIOS -->
+    <section id="sec-subcontratos" class="hidden space-y-4">
+      <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 space-y-4">
+        <h2 class="text-lg font-semibold text-gray-800 border-b pb-2">Gestión de Subcontratos</h2>
+        <p class="text-xs text-gray-500">Consulta de saldos de subcontratistas (Plomero, Electricista, Durlock, etc.)</p>
+        
+        <div id="listaSubcontratos" class="space-y-3">
+          <div class="p-4 bg-gray-50 border rounded-xl text-center text-sm text-gray-500">
+            Los datos de subcontratistas se cargan automáticamente desde los movimientos y contratos registrados.
           </div>
         </div>
+      </div>
+    </section>
 
-        <h3 class="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-          <i class="fa-solid fa-list-check text-blue-600"></i> Historial de Movimientos Cargados
-        </h3>
-
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs text-gray-600">
-            <thead class="bg-gray-50 uppercase text-gray-400 border-b">
-              <tr>
-                <th class="p-2">Fecha</th>
-                <th class="p-2">Tipo</th>
-                <th class="p-2">Empleado/Detalle</th>
-                <th class="p-2 text-right">Monto</th>
-              </tr>
-            </thead>
-            <tbody id="tabla-obra-movimientos" class="divide-y">
-              <!-- Se completa automáticamente -->
-            </tbody>
-          </table>
+    <!-- 📋 TAB 4: MOVIMIENTOS -->
+    <section id="sec-movimientos" class="hidden space-y-4">
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-3">
+        <input type="text" id="txtBuscar" onkeyup="filtrarTabla()" placeholder="🔍 Buscar por concepto, proveedor o peón..." class="w-full p-3 border rounded-lg text-sm">
+        
+        <div id="listaMovimientos" class="space-y-2 max-h-96 overflow-y-auto">
+          <!-- Se llena dinámicamente -->
         </div>
       </div>
-    </div>
+    </section>
 
   </main>
 
-
-  <!-- MODALES -->
-  <div id="modal-empleado" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-xl max-w-md w-full p-6 shadow-xl space-y-4">
-      <h3 class="text-lg font-bold text-gray-800">Agregar Nuevo Empleado</h3>
-      <input type="text" id="emp-nombre" placeholder="Nombre y Apellido" class="w-full p-2.5 border rounded-lg text-sm outline-none">
-      <input type="text" id="emp-dni" placeholder="DNI / CUIT" class="w-full p-2.5 border rounded-lg text-sm outline-none">
-      <input type="text" id="emp-gremio" placeholder="Gremio / Especialidad" class="w-full p-2.5 border rounded-lg text-sm outline-none">
-      <div class="flex justify-end space-x-2 pt-2">
-        <button onclick="cerrarModalEmpleado()" class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">Cancelar</button>
-        <button onclick="guardarEmpleado()" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg font-bold">Guardar</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="modal-obra" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-xl max-w-md w-full p-6 shadow-xl space-y-4">
-      <h3 class="text-lg font-bold text-gray-800">Agregar Nueva Obra</h3>
-      <input type="text" id="obra-nombre" placeholder="Nombre / Ubicación de la Obra" class="w-full p-2.5 border rounded-lg text-sm outline-none">
-      <input type="text" id="obra-cliente" placeholder="Cliente / Contacto" class="w-full p-2.5 border rounded-lg text-sm outline-none">
-      <input type="number" id="obra-presupuesto" placeholder="Presupuesto Total ($)" class="w-full p-2.5 border rounded-lg text-sm outline-none">
-      <div class="flex justify-end space-x-2 pt-2">
-        <button onclick="cerrarModalObra()" class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">Cancelar</button>
-        <button onclick="guardarObra()" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg font-bold">Guardar</button>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- LÓGICA JAVASCRIPT -->
   <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxWRl2HOSH8dB6qGPY3Ywl4jU4kSup8XcQpRX9PA-q9Xf7PELEsyLvxKg3ThaYVZO0jWQ/exec";
+    var globalData = { empleados: [], obras: [], movimientos: [] };
+    var ocultarMontos = false;
 
-    let globalData = { empleados: [], obras: [], movimientos: [] };
-    let privacidad = { vales: false, balance: false, utilidades: false };
-    let tabActiva = 'registrar';
+    window.onload = function() {
+      cargarDatosServidor();
+    };
 
-    async function cargarDatos() {
-      try {
-        const res = await fetch(WEB_APP_URL);
-        const data = await res.json();
-        if (data.success) {
-          globalData = data;
-          renderizarTodo();
+    function cargarDatosServidor() {
+      google.script.run.withSuccessHandler(function(res) {
+        if(res.success) {
+          globalData = res;
+          poblarCombos();
+          renderizarTabla();
+          renderizarSubcontratos();
+        } else {
+          alert("Error al cargar datos: " + res.error);
         }
-      } catch (e) {
-        console.error("Error al cargar datos:", e);
-      }
+      }).getDatos();
     }
 
-    function renderizarTodo() {
-      renderizarTabs();
-      renderizarFormulario();
-      renderizarFinanzas();
-      renderizarListaEmpleados();
+    function poblarCombos() {
+      var selO = document.getElementById('selObra');
+      var selE = document.getElementById('selEmpleado');
+      var simO = document.getElementById('simObra');
 
-      if (tabActiva.startsWith('obra-')) {
-        const idObra = tabActiva.replace('obra-', '');
-        verDetalleObra(idObra);
-      }
-    }
+      selO.innerHTML = '<option value="">-- Seleccionar Obra --</option>';
+      selE.innerHTML = '<option value="">-- Seleccionar Empleado --</option>';
+      simO.innerHTML = '<option value="">-- Seleccionar Obra --</option>';
 
-    // 1. SOLAPAS SUPERIORES DE NAVEGACIÓN
-    function renderizarTabs() {
-      const container = document.getElementById('tabs-container');
-      let html = `
-        <button onclick="cambiarTab('registrar')" class="py-3 px-4 border-b-2 transition font-bold ${tabActiva === 'registrar' ? 'border-amber-400 text-amber-300 bg-blue-900/40' : 'border-transparent opacity-80 hover:opacity-100'}">
-          + Registrar
-        </button>
-        <button onclick="cambiarTab('empleados')" class="py-3 px-4 border-b-2 transition font-bold ${tabActiva === 'empleados' ? 'border-amber-400 text-amber-300 bg-blue-900/40' : 'border-transparent opacity-80 hover:opacity-100'}">
-          Empleados
-        </button>
-        <button onclick="cambiarTab('finanzas')" class="py-3 px-4 border-b-2 transition font-bold ${tabActiva === 'finanzas' ? 'border-amber-400 text-amber-300 bg-blue-900/40' : 'border-transparent opacity-80 hover:opacity-100'}">
-          Resumen & Utilidad
-        </button>
-      `;
-
-      globalData.obras.forEach(obra => {
-        const isActive = tabActiva === `obra-${obra.ID}`;
-        html += `
-          <button onclick="cambiarTab('obra-${obra.ID}')" class="py-3 px-4 border-b-2 transition font-bold ${isActive ? 'border-amber-400 text-amber-300 bg-blue-900/40' : 'border-transparent opacity-80 hover:opacity-100'}">
-            ${obra.Nombre}
-          </button>
-        `;
+      globalData.obras.forEach(function(o) {
+        selO.innerHTML += '<option value="' + o.ID + '">' + o.Nombre + '</option>';
+        simO.innerHTML += '<option value="' + o.ID + '">' + o.Nombre + '</option>';
       });
 
-      container.innerHTML = html;
+      globalData.empleados.forEach(function(e) {
+        selE.innerHTML += '<option value="' + e.ID + '">' + e.Nombre + '</option>';
+      });
     }
 
-    function cambiarTab(idTab) {
-      tabActiva = idTab;
-      renderizarTabs();
-
-      document.querySelectorAll('.vista-seccion').forEach(el => el.classList.add('hidden'));
-
-      if (idTab === 'registrar') {
-        document.getElementById('vista-registrar').classList.remove('hidden');
-      } else if (idTab === 'empleados') {
-        document.getElementById('vista-empleados').classList.remove('hidden');
-      } else if (idTab === 'finanzas') {
-        document.getElementById('vista-finanzas').classList.remove('hidden');
-      } else if (idTab.startsWith('obra-')) {
-        document.getElementById('vista-obra-detalle').classList.remove('hidden');
-        const idObra = idTab.replace('obra-', '');
-        verDetalleObra(idObra);
+    function evaluarTipoOp() {
+      var t = document.getElementById('selTipo').value;
+      var divE = document.getElementById('divEmpleado');
+      var divR = document.getElementById('divRubro');
+      
+      if(t === 'Vale') {
+        divE.classList.remove('hidden');
+        divR.classList.add('hidden');
+      } else {
+        divE.classList.add('hidden');
+        divR.classList.remove('hidden');
       }
     }
 
-    // 2. FICHA DE EMPLEADOS
-    function renderizarListaEmpleados() {
-      const select = document.getElementById('select-ficha-empleado');
-      select.innerHTML = '<option value="">-- Seleccionar Operario --</option>';
-      globalData.empleados.forEach(emp => {
-        select.innerHTML += `<option value="${emp.ID}">${emp.Nombr
+    function cambiarTab(tab) {
+      ['cargar', 'simular', 'subcontratos', 'movimientos'].forEach(function(t) {
+        document.getElementById('sec-' + t).classList.add('hidden');
+        document.getElementById('tab-' + t).classList.remove('tab-active');
+      });
+      document.getElementById('sec-' + tab).classList.remove('hidden');
+      document.getElementById('tab-' + tab).classList.add('tab-active');
+    }
+
+    // 🧮 LÓGICA DEL SIMULADOR AUTOMÁTICO
+    function cargarSimuladorObra() {
+      var idObra = document.getElementById('simObra').value;
+      var boxCaja = document.getElementById('boxCajaObra');
+      var panel = document.getElementById('panelSimulador');
+
+      if(!idObra) {
+        boxCaja.classList.add('hidden');
+        panel.classList.add('hidden');
+        return;
+      }
+
+      var totalIngresado = 0;
+      var totalGastado = 0;
+
+      globalData.movimientos.filter(m => m.ID_Obra === idObra).forEach(function(m) {
+        if(m.Tipo === 'Ingreso') {
+          totalIngresado += parseFloat(m.Monto) || 0;
+        } else {
+          totalGastado += parseFloat(m.Monto) || 0;
+        }
+      });
+
+      var saldoCaja = totalIngresado - totalGastado;
+
+      document.getElementById('simIngresado').innerText = '$' + totalIngresado.toLocaleString();
+      document.getElementById('simGastado').innerText = '$' + totalGastado.toLocaleString();
+      document.getElementById('simCajaDisponible').innerText = '$' + saldoCaja.toLocaleString();
+      
+      boxCaja.classList.remove('hidden');
+
+      var cont = document.getElementById('contenedorSimulacion');
+      cont.innerHTML = '';
+
+      globalData.empleados.forEach(function(e) {
+        var card = document.createElement('div');
+        card.className = "bg-gray-50 border p-3 rounded-xl space-y-2";
+        card.innerHTML = `
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-gray-800">${e.Nombre}</span>
+            <span class="text-xs text-red-600 font-bold">Vales acum: <span class="privacy-mask">$${(e.SaldoDeudor || 0).toLocaleString()}</span></span>
+          </div>
+          <div class="grid grid-cols-3 gap-2 items-center text-xs">
+            <div>
+              <label class="block text-gray-500 font-bold">Jornal ($)</label>
+              <input type="number" value="${e.Jornal || 0}" id="simJornal_${e.ID}" oninput="recalcularSimulacion()" class="w-full p-2 border rounded font-bold">
+            </div>
+            <div>
+              <label class="block text-gray-500 font-bold">Días Trab.</label>
+              <input type="number" value="5" step="0.5" id="simDias_${e.ID}" oninput="recalcularSimulacion()" class="w-full p-2 border rounded font-bold text-center">
+            </div>
+            <div>
+              <label class="block text-gray-500 font-bold">Desc. Vale</label>
+              <input type="number" value="${e.SaldoDeudor || 0}" id="simDesc_${e.ID}" oninput="recalcularSimulacion()" class="w-full p-2 border rounded font-bold text-red-600">
+            </div>
+          </div>
+          <div class="flex justify-between items-center border-t pt-2 text-xs font-bold">
+            <span class="text-gray-600">PAGO NETO:</span>
+            <span id="simNeto_${e.ID}" class="text-emerald-700 text-base privacy-mask">$0</span>
+          </div>
+        `;
+        cont.appendChild(card);
+      });
+
+      panel.classList.remove('hidden');
+      recalcularSimulacion();
+    }
+
+    function recalcularSimulacion() {
+      var totalPagar = 0;
+
+      globalData.empleados.forEach(function(e) {
+        var jornal = parseFloat(document.getElementById('simJornal_' + e.ID).value) || 0;
+        var dias = parseFloat(document.getElementById('simDias_' + e.ID).value) || 0;
+        var desc = parseFloat(document.getElementById('simDesc_' + e.ID).value) || 0;
+
+        var bruto = jornal * dias;
+        var neto = bruto - desc;
+        if (neto < 0) neto = 0;
+
+        document.getElementById('simNeto_' + e.ID).innerText = '$' + neto.toLocaleString();
+        totalPagar += bruto; 
+      });
+
+      var cajaDisponible = parseFloat(document.getElementById('simCajaDisponible').innerText.replace('$','').replace(/\./g,'')) || 0;
+      var saldoRestante = cajaDisponible - totalPagar;
+
+      document.getElementById('simTotalPagar').innerText = '$' + totalPagar.toLocaleString();
+      
+      var elRestante = document.getElementById('simSaldoRestante');
+      elRestante.innerText = '$' + saldoRestante.toLocaleString();
+      
+      if(saldoRestante < 0) {
+        elRestante.className = "font-bold text-lg text-red-600 privacy-mask";
+      } else {
+        elRestante.className = "font-bold text-lg text-emerald-700 privacy-mask";
+      }
+    }
+
+    function procesarPagoSimulado() {
+      var idObra = document.getElementById('simObra').value;
+      if(!idObra) { alert("Seleccioná una obra."); return; }
+
+      if(!confirm("¿Confirmás registrar el pago de toda la cuadrilla?")) return;
+
+      var registrados = 0;
+
+      globalData.empleados.forEach(function(e) {
+        var jornal = parseFloat(document.getElementById('simJornal_' + e.ID).value) || 0;
+        var dias = parseFloat(document.getElementById('simDias_' + e.ID).value) || 0;
+        var desc = parseFloat(document.getElementById('simDesc_' + e.ID).value) || 0;
+        var bruto = jornal * dias;
+
+        if(dias > 0 && bruto > 0) {
+          google.script.run.guardarJornalEmpleado(e.ID, jornal);
+
+          var dto = {
+            idObra: idObra,
+            idEmpleado: e.ID,
+            tipo: 'Liquidacion',
+            rubro: 'Mano de Obra',
+            monto: bruto,
+            descuentoVale: desc,
+            formaPago: 'Efectivo',
+            concepto: 'Pago Quincena/Semana (' + dias + ' días)'
+          };
+
+          google.script.run.guardarMovimientoServidor(dto);
+          registrados++;
+        }
+      });
+
+      if(registrados > 0) {
+        alert("✅ Liquidaciones registradas correctamente.");
+        setTimeout(function(){ cargarDatosServidor(); cambiarTab('movimientos'); }, 1500);
+      } else {
+        alert("No se ingresaron días trabajados.");
+      }
+    }
+
+    function guardarRegistro() {
+      var dto = {
+        idObra: document.getElementById('selObra').value,
+        tipo: document.getElementById('selTipo').value,
+        idEmpleado: document.getElementById('selEmpleado').value,
+        rubro: document.getElementById('txtRubro').value,
+        monto: document.getElementById('numMonto').value,
+        formaPago: document.getElementById('selFormaPago').value,
+        remito: document.getElementById('txtRemito').value,
+        concepto: document.getElementById('txtConcepto').value
+      };
+
+      if(!dto.idObra || !dto.monto) { alert("Completá la Obra y el Monto."); return; }
+
+      google.script.run.withSuccessHandler(function(res) {
+        if(res.success) {
+          alert("✅ Movimiento guardado.");
+          document.getElementById('numMonto').value = '';
+          document.getElementById('txtConcepto').value = '';
+          cargarDatosServidor();
+        } else {
+          alert("Error: " + res.error);
+        }
+      }).guardarMovimientoServidor(dto);
+    }
+
+    function renderizarSubcontratos() {
+      var cont = document.getElementById('listaSubcontratos');
+      var movSub = globalData.movimientos.filter(m => m.Tipo === 'Pago Subcontrato' || m.Rubro.toLowerCase().includes('plomero') || m.Rubro.toLowerCase().includes('electricista'));
+      
+      if(movSub.length === 0) {
+        cont.innerHTML = '<div class="p-4 bg-gray-50 border rounded-xl text-center text-sm text-gray-500">No hay pagos a subcontratos registrados aún.</div>';
+        return;
+      }
+
+      cont.innerHTML = '';
+      movSub.forEach(function(m) {
+        var card = document.createElement('div');
+        card.className = "p-3 bg-gray-50 border rounded-lg flex justify-between items-center text-sm";
+        card.innerHTML = `
+          <div>
+            <span class="text-xs text-blue-600 font-bold uppercase">${m.Rubro || 'Subcontrato'}</span>
+            <div class="font-bold text-gray-800">${m.Concepto || 'Entrega / Avance'}</div>
+            <div class="text-xs text-gray-500">${m.Fecha}</div>
+          </div>
+          <div class="font-bold text-red-600 privacy-mask">
+            -$${parseFloat(m.Monto).toLocaleString()}
+          </div>
+        `;
+        cont.appendChild(card);
+      });
+      if(ocultarMontos) aplicarPrivacidadUI();
+    }
+
+   function renderizarTabla() {
+      var cont = document.getElementById('listaMovimientos');
+      cont.innerHTML = '';
+
+      globalData.movimientos.forEach(function(m) {
+        var nombreObra = (globalData.obras.find(o => o.ID === m.ID_Obra) || {}).Nombre || 'Obra';
+        var tituloModal = (m.Concepto || m.Rubro || m.Tipo).replace(/'/g, "\\'");
+        
+        var card = document.createElement('div');
+        card.className = "p-3 bg-gray-50 hover:bg-gray-100 border rounded-lg flex justify-between items-center text-sm cursor-pointer transition-all";
+        // Asignación explícita del manejador de clic:
+        card.onclick = function() {
+          window.abrirModalConTitulo(m.Concepto || m.Rubro || m.Tipo);
+        };
+        
+        card.innerHTML = `
+          <div>
+            <span class="text-xs text-blue-600 font-bold uppercase">${nombreObra}</span>
+            <div class="font-bold text-gray-800">${m.Concepto || m.Rubro || m.Tipo}</div>
+            <div class="text-xs text-gray-500">${m.Fecha} • ${m.FormaPago}</div>
+          </div>
+          <div class="font-bold ${m.Tipo === 'Ingreso' ? 'text-green-600' : 'text-red-600'} privacy-mask">
+            ${m.Tipo === 'Ingreso' ? '+' : '-'}$${parseFloat(m.Monto).toLocaleString()}
+          </div>
+        `;
+        cont.appendChild(card);
+      });
+      
+      if(ocultarMontos) aplicarPrivacidadUI();
+    }
+
+    function togglePrivacy() {
+      ocultarMontos = !ocultarMontos;
+      document.getElementById('privacyStatus').innerText = ocultarMontos ? 'Oculto' : 'Visible';
+      aplicarPrivacidadUI();
+    }
+
+    function aplicarPrivacidadUI() {
+      var el = document.querySelectorAll('.privacy-mask');
+      el.forEach(function(e) {
+        if(ocultarMontos) e.classList.add('blur-sm');
+        else e.classList.remove('blur-sm');
+      });
+    }
+
+    function filtrarTabla() {
+      var q = document.getElementById('txtBuscar').value.toLowerCase();
+      var items = document.getElementById('listaMovimientos').children;
+      Array.from(items).forEach(function(item) {
+        item.style.display = item.innerText.toLowerCase().includes(q) ? 'flex' : 'none';
+      });
+    }
+  window.abrirModalConTitulo = function(titulo) {
+    var elNombre = document.getElementById('modalNombreEmpleado');
+    var elModal = document.getElementById('modalItem');
+    if (elNombre) elNombre.innerText = titulo || 'Movimiento';
+    if (elModal) {
+      elModal.classList.remove('hidden');
+      elModal.classList.add('flex');
+    }
+  };
+
+  window.cerrarModalItem = function() {
+    var elModal = document.getElementById('modalItem');
+    if (elModal) {
+      elModal.classList.add('hidden');
+      elModal.classList.remove('flex');
+    }
+  };
+
+  window.accionBorrarItem = function() {
+    if (confirm("¿Seguro que querés borrar este movimiento?")) {
+      window.cerrarModalItem();
+    }
+  };
+
+  window.accionModificarItem = function() {
+    var nuevo = prompt("Modificar concepto / detalle:");
+    if (nuevo !== null) {
+      window.cerrarModalItem();
+    }
+  };
+  </script>
+<!-- Fin del script de JavaScript -->
+
+  <!-- VENTANA EMERGENTE (MODAL) PARA ACCIONES (Fuera de <script>) -->
+  <div id="modalItem" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl p-5 max-w-xs w-full shadow-2xl space-y-4">
+      <h3 id="modalNombreEmpleado" class="font-bold text-slate-800 text-base border-b pb-2">Movimiento</h3>
+      
+      <div class="space-y-2">
+        <button onclick="window.accionModificarItem()" type="button" class="w-full bg-slate-100 hover:bg-amber-50 text-slate-700 hover:text-amber-700 font-bold py-2.5 px-4 rounded-xl border border-slate-200 text-sm flex items-center justify-center gap-2">
+          ✏️ Modificar
+        </button>
+        <button onclick="window.accionBorrarItem()" type="button" class="w-full bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold py-2.5 px-4 rounded-xl border border-rose-200 text-sm flex items-center justify-center gap-2">
+          🗑️ Borrar
+        </button>
+      </div>
+
+      <button onclick="window.cerrarModalItem()" type="button" class="w-full bg-slate-200 text-slate-600 font-semibold py-2 px-4 rounded-xl text-xs">
+        Cancelar
+      </button>
+    </div>
+  </div>
+
+</body>
+</html>
